@@ -218,7 +218,7 @@ let colors = [
     '#999999',
     '#666666',
     '#333333',
-    '#000000'
+    '##000066'
 ]
 
 
@@ -279,9 +279,6 @@ class Country {
 
                     });
 
-
-
-
                 });
 
             }
@@ -323,7 +320,7 @@ let allCountries = [];
 let countryNames = ["Iceland", "USA", "Russia", "China", "Germany", "Brazil", "France", "UK", "Japan", "Australia", "Canada", "South Korea", "Egypt", "India", "Pakistan", "Nigeria", "Iran", "Turkey", "Democratic Republic of the Congo", "Indonesia", "Bangladesh"];
 let regens = [1, 3.7, 6.6, 4, 1, 3.2, 1, 1, 1, 2.9, 3.8, 1, 1, 2.1, 1, 1, 1, 1, 2, 2, 1];
 let strengths = [1, 339, 147, 1425, 80, 216, 68, 69, 125, 25, 37, 51, 100, 142, 240, 221, 92, 81, 95, 277, 185];
-//let colors = ["2041E5", "7E4FFC", "5BD7F4", "3DE83D", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000"];
+//let colors = ["2041E5", "7E4FFC", "5BD7F4", "3DE83D", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066", "#000066"];
 
 countryNames.forEach((name, index) => {
     let country = new Country(name, regens[index], strengths[index], colors[index], 0);
@@ -374,48 +371,38 @@ function startWar(inputCountry){
 
 
 
-var SPEED = 1000
+var SPEED = 99999
 
 
 let svg = document.querySelector('svg');
 
-//1500 730
+//2000 730
 
 var timeouts = [];
 
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-}
 
-function shuffleElements(elements) {
-  for (let i = elements.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [elements[i], elements[j]] = [elements[j], elements[i]];
-  }
-}
 
 function deleteSquares(){
 
-    let squares = svg.querySelectorAll('path');
+        if (timeouts && timeouts.length){
+            timeouts.forEach(timeout => {
+                clearTimeout(timeout);
+            });
+            timeouts = [];
+        }
 
-    if (timeouts && timeouts.length){
-        timeouts.forEach(timeout => {
-            clearTimeout(timeout);
+        const pathsArray = Array.from(svg.querySelectorAll('path'));
+
+        shuffleArray(pathsArray);
+
+        pathsArray.forEach((square, index) => {
+            let timeout = setTimeout(function(){
+                square.remove();
+            }, index * SPEED);
+
+            timeouts.push(timeout);
+
         });
-        timeouts = [];
-    }
-
-    squares.forEach((square, index) => {
-        let timeout = setTimeout(function(){
-            square.remove();
-        }, index * (randomInt(1,10) + SPEED));
-
-        timeouts.push(timeout);
-
-    });
 }
 
 function goSlower(){
@@ -423,8 +410,10 @@ function goSlower(){
     console.log(SPEED);
     deleteSquares();
 }
-function goFaster(){
-    SPEED -= 1;
+function goFaster(e){
+
+    console.dir(e);
+    SPEED -= (e.shift) ? 20 : 5;
     if (SPEED <= 0) SPEED = 1;
     console.log(SPEED);
     deleteSquares();
@@ -443,16 +432,16 @@ function squareIsWithinBounds(squaresInClickedCountry, square){
 
         //if above / below
         if (
-            Math.abs(Math.ceil(squareInClickedCountryBox.top) - Math.ceil(squareBox.top)) <= 8 &&
-            Math.abs(Math.ceil(squareInClickedCountryBox.left) - Math.ceil(squareBox.left)) <= 3
+            Math.abs(Math.ceil(squareInClickedCountryBox.top) - Math.ceil(squareBox.top)) <= 30 &&
+            Math.abs(Math.ceil(squareInClickedCountryBox.left) - Math.ceil(squareBox.left)) <= 30
         ){
             isWithinBounds = true;
         }
 
         //if left / right
         if (
-            Math.abs(Math.ceil(squareInClickedCountryBox.top) - Math.ceil(squareBox.top)) <= 3 &&
-            Math.abs(Math.ceil(squareInClickedCountryBox.left) - Math.ceil(squareBox.left)) <= 8
+            Math.abs(Math.ceil(squareInClickedCountryBox.top) - Math.ceil(squareBox.top)) <= 30 &&
+            Math.abs(Math.ceil(squareInClickedCountryBox.left) - Math.ceil(squareBox.left)) <= 30
         ){
             isWithinBounds = true;
         }
@@ -467,7 +456,47 @@ let alreadyClicked = [];
 
 var squaresInClickedCountry = [];
 
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+
+
+
+
 document.addEventListener('click', event => {
+
+    if (event.target.closest('#faster')){
+        SPEED -= (event.shiftKey) ? 20 : 5;
+        console.log('faster -= ' + SPEED);
+        document.querySelector('#slower').textContent = 'slower (' + SPEED + ')';
+        document.querySelector('#faster').textContent = 'faster (' + SPEED + ')';
+        deleteSquares();
+        return;
+    }
+    if (event.target.closest('#slower')){
+        SPEED += (event.shiftKey) ? 200 : 100;
+        console.log('slower += ' + SPEED);
+        document.querySelector('#slower').textContent = 'slower (' + SPEED + ')';
+        document.querySelector('#faster').textContent = 'faster (' + SPEED + ')';
+        deleteSquares();
+        return;
+    }
+     if (event.target.closest('#pause')){
+
+        let wasPaused = (SPEED === 99999);
+
+        SPEED = (wasPaused) ? 100 : 99999;
+
+        event.target.textContent = (wasPaused) ? 'pause' : 'play';
+
+        console.log('pause = ' + SPEED);
+        deleteSquares();
+        return;
+     }
 
     let clickedSquare = event.target.closest('path');
 
@@ -483,11 +512,16 @@ document.addEventListener('click', event => {
 
         squaresInClickedCountry.push(clickedSquare);
 
-        clickedSquare.style.fill = '#FFA500';
-        clickedSquare.style.stroke = '#FFA500';
+        clickedSquare.style.fill = '#000066';
+        clickedSquare.style.stroke = '#000066';
 
         let allSquares = document.querySelectorAll('path');
-        allSquares.forEach(square => {
+
+        const pathsArray = Array.from(document.querySelectorAll('path'));
+
+        shuffleArray(pathsArray);
+
+        pathsArray.forEach(square => {
 
             if (
                 square.getAttribute('fill') === originalCountryColor &&
@@ -496,8 +530,8 @@ document.addEventListener('click', event => {
 
                 //square.dispatchEvent(new MouseEvent("click",{bubbles: true, cancellable: true}));
 
-                square.style.fill = '#FFA500';
-                square.style.stroke = '#FFA500';
+                square.style.fill = '#000066';
+                square.style.stroke = '#000066';
 
                 squaresInClickedCountry.push(square);
 
